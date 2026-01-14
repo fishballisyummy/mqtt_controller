@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>風洞模擬器 - 3D 粒子場景</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: white;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        .simulation-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: #0a1929;
+            border-right: 2px solid #4ecdc4;
+        }
+        
+        #webglCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .controls-panel {
+            width: 300px;
+            background: rgba(15, 32, 39, 0.95);
+            padding: 20px;
+            overflow-y: auto;
+            border-left: 2px solid #ff6b6b;
+        }
+        
+        .panel-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #4ecdc4;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
+        }
+        
+        .control-group {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #2c5364;
+        }
+        
+        .control-group h3 {
+            margin-bottom: 15px;
+            color: #ffd166;
+            font-size: 1.2rem;
+        }
+        
+        .slider-container {
+            margin: 10px 0;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 8px;
+            background: #2c3e50;
+            border-radius: 4px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #4ecdc4;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(78, 205, 196, 0.8);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+        
+        .btn-upload {
+            background: linear-gradient(45deg, #4ecdc4, #55efc4);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #ffd166, #ffea8a);
+            color: #1a1a2e;
+        }
+        
+        .status-info {
+            background: rgba(44, 62, 80, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+        
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+        }
+        
+        .upload-info {
+            text-align: center;
+            padding: 15px;
+            background: rgba(44, 62, 80, 0.5);
+            border-radius: 8px;
+            margin: 15px 0;
+            font-size: 0.9rem;
+            color: #a1c4fd;
+        }
+        
+        .instructions {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 107, 107, 0.2);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+        
+        .instructions h4 {
+            color: #ff6b6b;
+            margin-bottom: 8px;
+        }
+
+        /* 警告橫幅 */
+        .warning-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: #ff6b6b;
+            color: white;
+            text-align: center;
+            padding: 8px;
+            font-weight: bold;
+            z-index: 1000;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            .controls-panel {
+                width: 100%;
+                height: 300px;
+                border-left: none;
+                border-top: 2px solid #ff6b6b;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 安全警告橫幅 -->
+    <div class="warning-banner" id="warningBanner">
+        ⚠️ 請勿直接雙擊開啟！請用 Live Server 或 http-server 啟動本頁面以支援檔案上傳。
+    </div>
+
+    <div class="container">
+        <div class="simulation-area">
+            <canvas id="webglCanvas"></canvas>
+        </div>
+        
+        <div class="controls-panel">
+            <h2 class="panel-title">風洞模擬控制台</h2>
+            
+            <div class="upload-info">
+                📁 支援格式: .glTF, .glb, .OBJ, .STL<br>
+                (Three.js 真實 3D 渲染)
+            </div>
+
+            <!-- 隱藏的檔案輸入（關鍵！） -->
+            <input type="file" id="modelFileInput" accept=".gltf,.glb,.obj,.stl" style="display:none" />
+
+            <div class="control-group">
+                <h3>風洞參數</h3>
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>風速</span>
+                        <span id="windSpeedValue">50 km/h</span>
+                    </div>
+                    <input type="range" min="0" max="200" value="50" class="slider" id="windSpeed">
+                </div>
+                
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>粒子密度</span>
+                        <span id="particleDensityValue">100</span>
+                    </div>
+                    <input type="range" min="10" max="300" value="100" class="slider" id="particleDensity">
+                </div>
+                
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>湍流強度</span>
+                        <span id="turbulenceValue">30%</span>
+                    </div>
+                    <input type="range" min="0" max="100" value="30" class="slider" id="turbulence">
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <h3>模型控制</h3>
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>X 軸旋轉</span>
+                        <span id="rotationXValue">0°</span>
+                    </div>
+                    <input type="range" min="-180" max="180" value="0" class="slider" id="rotationX">
+                </div>
+                
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>Y 軸旋轉</span>
+                        <span id="rotationYValue">0°</span>
+                    </div>
+                    <input type="range" min="-180" max="180" value="0" class="slider" id="rotationY">
+                </div>
+                
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>Z 軸旋轉</span>
+                        <span id="rotationZValue">0°</span>
+                    </div>
+                    <input type="range" min="-180" max="180" value="0" class="slider" id="rotationZ">
+                </div>
+                
+                <button class="btn btn-upload" id="uploadBtn">
+                    📤 上傳 3D 模型
+                </button>
+            </div>
+            
+            <button class="btn btn-primary" id="startBtn">
+                ▶ 開始模擬
+            </button>
+            <button class="btn" id="pauseBtn">
+                ⏸ 暫停模擬
+            </button>
+            <button class="btn" id="resetBtn">
+                🔄 重置模擬
+            </button>
+            
+            <div class="status-info">
+                <div class="status-row">
+                    <span>狀態:</span>
+                    <span id="simulationStatus">已暫停</span>
+                </div>
+                <div class="status-row">
+                    <span>粒子數:</span>
+                    <span id="particleCount">0</span>
+                </div>
+                <div class="status-row">
+                    <span>幀率:</span>
+                    <span id="fps">0 FPS</span>
+                </div>
+            </div>
+            
+            <div class="instructions">
+                <h4>ℹ️ 使用說明</h4>
+                <p>• 調整風速觀察粒子流動變化<br>
+                • 三軸旋轉控制模型角度<br>
+                • 真實 Three.js 3D 渲染<br>
+                • 粒子系統模擬氣流</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入 Three.js 及必要模組（無空格！） -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/controls/OrbitControls.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/loaders/OBJLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/loaders/STLLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/utils/BufferGeometryUtils.js"></script>
+
+    <script>
+        // === 安全檢查：是否使用 file:// ===
+        if (window.location.protocol === 'file:') {
+            document.getElementById('warningBanner').style.display = 'block';
+            alert('⚠️ 請勿直接雙擊開啟 HTML！\n\n請使用 Live Server、http-server 或其他本機伺服器啟動本頁面，否則無法上傳模型。');
+        }
+
+        // === Three.js 變量 ===
+        let scene, camera, renderer, controls;
+        let model = null;
+        let particles = [];
+        let simulationRunning = false;
+        let animationId = null;
+        let lastTime = 0;
+        let frameCount = 0;
+        let fps = 0;
+
+        // === DOM 元素 ===
+        const windSpeedSlider = document.getElementById('windSpeed');
+        const particleDensitySlider = document.getElementById('particleDensity');
+        const turbulenceSlider = document.getElementById('turbulence');
+        const rotationXSlider = document.getElementById('rotationX');
+        const rotationYSlider = document.getElementById('rotationY');
+        const rotationZSlider = document.getElementById('rotationZ');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const fileInput = document.getElementById('modelFileInput');
+
+        const windSpeedValue = document.getElementById('windSpeedValue');
+        const particleDensityValue = document.getElementById('particleDensityValue');
+        const turbulenceValue = document.getElementById('turbulenceValue');
+        const rotationXValue = document.getElementById('rotationXValue');
+        const rotationYValue = document.getElementById('rotationYValue');
+        const rotationZValue = document.getElementById('rotationZValue');
+        const simulationStatus = document.getElementById('simulationStatus');
+        const particleCountEl = document.getElementById('particleCount');
+        const fpsEl = document.getElementById('fps');
+
+        // === 初始化 Three.js ===
+        function initThreeJS() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a1929);
+            scene.fog = new THREE.Fog(0x0a1929, 20, 100);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 5, 25);
+
+            const canvas = document.getElementById('webglCanvas');
+            renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+            renderer.setSize(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0x4ecdc4, 1);
+            directionalLight.position.set(10, 20, 15);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+
+            createDefaultModel();
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function onWindowResize() {
+            const canvas = document.getElementById('webglCanvas');
+            const width = canvas.parentElement.clientWidth;
+            const height = canvas.parentElement.clientHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        }
+
+        function createDefaultModel() {
+            if (model) scene.remove(model);
+
+            const group = new THREE.Group();
+
+            const bodyGeometry = new THREE.CylinderGeometry(0.5, 0.8, 8, 8);
+            const bodyMaterial = new THREE.MeshPhongMaterial({ color: 0xff6b6b });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            body.rotation.z = Math.PI / 2;
+            group.add(body);
+
+            const wingGeometry = new THREE.BoxGeometry(12, 0.1, 2);
+            const wingMaterial = new THREE.MeshPhongMaterial({ color: 0x4ecdc4 });
+            const wing = new THREE.Mesh(wingGeometry, wingMaterial);
+            wing.position.y = -0.5;
+            group.add(wing);
+
+            const tailGeometry = new THREE.BoxGeometry(0.1, 3, 2);
+            const tailMaterial = new THREE.MeshPhongMaterial({ color: 0xffd166 });
+            const tail = new THREE.Mesh(tailGeometry, tailMaterial);
+            tail.position.x = 3.5;
+            tail.position.y = 1;
+            group.add(tail);
+
+            model = group;
+            model.position.y = -2;
+            scene.add(model);
+        }
+
+        function loadModelIntoScene(newModel) {
+            if (model) scene.remove(model);
+            model = newModel;
+
+            const box = new THREE.Box3().setFromObject(model);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+
+            model.position.sub(center);
+            const maxDim = Math.max(size.x, size.y, size.z);
+            if (maxDim > 0) {
+                const scale = 8 / maxDim;
+                model.scale.setScalar(scale);
+            }
+            model.position.y = -2;
+            scene.add(model);
+
+            // 重置旋轉滑桿
+            rotationXSlider.value = 0;
+            rotationYSlider.value = 0;
+            rotationZSlider.value = 0;
+            updateDisplayValues();
+        }
+
+        async function handleFileUpload(file) {
+            return new Promise((resolve, reject) => {
+                const url = URL.createObjectURL(file);
+                const extension = file.name.split('.').pop().toLowerCase();
+
+                const cleanup = () => URL.revokeObjectURL(url);
+
+                if (extension === 'gltf' || extension === 'glb') {
+                    const loader = new THREE.GLTFLoader();
+                    loader.load(url, (gltf) => {
+                        cleanup();
+                        loadModelIntoScene(gltf.scene);
+                        resolve();
+                    }, undefined, (error) => {
+                        cleanup();
+                        reject(error);
+                    });
+                } else if (extension === 'obj') {
+                    const loader = new THREE.OBJLoader();
+                    loader.load(url, (obj) => {
+                        cleanup();
+                        loadModelIntoScene(obj);
+                        resolve();
+                    }, undefined, (error) => {
+                        cleanup();
+                        reject(error);
+                    });
+                } else if (extension === 'stl') {
+                    const loader = new THREE.STLLoader();
+                    loader.load(url, (geometry) => {
+                        cleanup();
+                        if (geometry.index === null) {
+                            geometry = THREE.BufferGeometryUtils.mergeVertices(geometry);
+                        }
+                        const material = new THREE.MeshPhongMaterial({
+                            color: 0x4ecdc4,
+                            specular: 0x111111,
+                            shininess: 100
+                        });
+                        const mesh = new THREE.Mesh(geometry, material);
+                        loadModelIntoScene(mesh);
+                        resolve();
+                    }, undefined, (error) => {
+                        cleanup();
+                        reject(error);
+                    });
+                } else {
+                    cleanup();
+                    reject(new Error('不支援的檔案格式'));
+                }
+            });
+        }
+
+        // === 事件綁定 ===
+        uploadBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            try {
+                await handleFileUpload(file);
+                alert(`✅ 成功載入模型：${file.name}`);
+                fileInput.value = ''; // 重置 input
+            } catch (error) {
+                console.error('模型載入失敗:', error);
+                alert(`❌ 載入失敗：${error.message || '請確認檔案格式或使用本機伺服器'}`);
+            }
+        });
+
+        function updateDisplayValues() {
+            windSpeedValue.textContent = `${windSpeedSlider.value} km/h`;
+            particleDensityValue.textContent = particleDensitySlider.value;
+            turbulenceValue.textContent = `${turbulenceSlider.value}%`;
+            rotationXValue.textContent = `${rotationXSlider.value}°`;
+            rotationYValue.textContent = `${rotationYSlider.value}°`;
+            rotationZValue.textContent = `${rotationZSlider.value}°`;
+
+            if (model) {
+                model.rotation.x = THREE.MathUtils.degToRad(parseFloat(rotationXSlider.value));
+                model.rotation.y = THREE.MathUtils.degToRad(parseFloat(rotationYSlider.value));
+                model.rotation.z = THREE.MathUtils.degToRad(parseFloat(rotationZSlider.value));
+            }
+        }
+
+        windSpeedSlider.addEventListener('input', updateDisplayValues);
+        particleDensitySlider.addEventListener('input', updateDisplayValues);
+        turbulenceSlider.addEventListener('input', updateDisplayValues);
+        rotationXSlider.addEventListener('input', updateDisplayValues);
+        rotationYSlider.addEventListener('input', updateDisplayValues);
+        rotationZSlider.addEventListener('input', updateDisplayValues);
+
+        startBtn.addEventListener('click', startSimulation);
+        pauseBtn.addEventListener('click', pauseSimulation);
+        resetBtn.addEventListener('click', resetSimulation);
+
+        // === 粒子系統 ===
+        function createParticles() {
+            const density = parseInt(particleDensitySlider.value);
+            particles.forEach(particle => scene.remove(particle));
+            particles = [];
+
+            for (let i = 0; i < density; i++) {
+                const geometry = new THREE.SphereGeometry(0.1, 8, 8);
+                const material = new THREE.MeshBasicMaterial({
+                    color: new THREE.Color(
+                        0.3 + Math.random() * 0.4,
+                        0.6 + Math.random() * 0.3,
+                        0.8 + Math.random() * 0.2
+                    ),
+                    transparent: true,
+                    opacity: 0.7
+                });
+                const particle = new THREE.Mesh(geometry, material);
+
+                particle.position.x = 30 + Math.random() * 10;
+                particle.position.y = -10 + Math.random() * 20;
+                particle.position.z = -10 + Math.random() * 20;
+
+                particle.userData = {
+                    speed: parseFloat(windSpeedSlider.value) * 0.05,
+                    turbulence: parseFloat(turbulenceSlider.value) * 0.01,
+                    originalX: particle.position.x
+                };
+
+                scene.add(particle);
+                particles.push(particle);
+            }
+
+            particleCountEl.textContent = density;
+        }
+
+        // === 動畫循環 ===
+        function animate(timestamp) {
+            if (!simulationRunning) return;
+
+            frameCount++;
+            if (timestamp >= lastTime + 1000) {
+                fps = frameCount;
+                frameCount = 0;
+                lastTime = timestamp;
+                fpsEl.textContent = `${fps} FPS`;
+            }
+
+            particles.forEach(particle => {
+                particle.position.x -= particle.userData.speed * 0.1;
+                if (Math.random() < particle.userData.turbulence) {
+                    particle.position.y += (Math.random() - 0.5) * 0.3;
+                    particle.position.z += (Math.random() - 0.5) * 0.3;
+                }
+                if (particle.position.x < -30) {
+                    particle.position.x = 30 + Math.random() * 10;
+                    particle.position.y = -10 + Math.random() * 20;
+                    particle.position.z = -10 + Math.random() * 20;
+                }
+            });
+
+            controls.update();
+            renderer.render(scene, camera);
+            animationId = requestAnimationFrame(animate);
+        }
+
+        function startSimulation() {
+            if (simulationRunning) return;
+            simulationRunning = true;
+            simulationStatus.textContent = '運行中';
+            createParticles();
+            animate();
+        }
+
+        function pauseSimulation() {
+            simulationRunning = false;
+            simulationStatus.textContent = '已暫停';
+            if (animationId) cancelAnimationFrame(animationId);
+        }
+
+        function resetSimulation() {
+            pauseSimulation();
+            createParticles();
+            simulationStatus.textContent = '已重置';
+            fpsEl.textContent = '0 FPS';
+
+            rotationXSlider.value = 0;
+            rotationYSlider.value = 0;
+            rotationZSlider.value = 0;
+            updateDisplayValues();
+        }
+
+        // === 啟動 ===
+        initThreeJS();
+        updateDisplayValues();
+        simulationStatus.textContent = '已暫停';
+    </script>
+</body>
+</html>
