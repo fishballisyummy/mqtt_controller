@@ -4,7 +4,7 @@ import numpy as np
 from mss import mss
 import struct
 
-UDP_IP = "SERVER_IP"
+UDP_IP = "192.168.83.1"
 UDP_PORT = 5005
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 

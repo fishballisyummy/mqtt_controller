@@ -4,7 +4,7 @@ import numpy as np
 import struct
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock.bind(("0.0.0.0", 5005))
+sock.bind(("192.168.83.1", 5005))
 
 frames = {}  # 暫存未完成的幀
 
