@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Block Blaster</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     body {
       margin: 0;
@@ -40,14 +41,85 @@
       top: 60%;
       left: 50%;
       transform: translate(-50%, -50%);
-      padding: 10px 20px;
+      padding: 12px 24px;
       font-size: 18px;
-      background: lime;
-      color: black;
+      background: linear-gradient(45deg, #4ecdc4, #55efc4);
+      color: #1a1a2e;
       border: none;
       cursor: pointer;
       display: none;
       margin-top: 10px;
+      border-radius: 25px;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+    }
+    
+    #restart:hover {
+      transform: translate(-50%, -52%);
+      box-shadow: 0 6px 20px rgba(78, 205, 196, 0.5);
+    }
+    
+    #restart:active {
+      transform: translate(-50%, -50%);
+    }
+    
+    .mobile-controls {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      gap: 20px;
+      z-index: 100;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 15px;
+      border-radius: 20px;
+      border: 2px solid #4ecdc4;
+    }
+    
+    .control-arrow {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(45deg, #4ecdc4, #55efc4);
+      border: none;
+      border-radius: 50%;
+      color: #1a1a2e;
+      font-size: 24px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .control-arrow:active {
+      transform: scale(0.9);
+      background: linear-gradient(45deg, #55efc4, #4ecdc4);
+    }
+    
+    @media (max-width: 768px) {
+      .mobile-controls {
+        display: flex;
+      }
+      
+      canvas {
+        max-width: 100%;
+        height: auto;
+      }
+      
+      body {
+        padding: 10px;
+      }
+      
+      #scoreBoard {
+        font-size: 16px;
+        margin-bottom: 15px;
+      }
+      
+      #message {
+        font-size: 24px;
+      }
     }
   </style>
 </head>
@@ -56,7 +128,17 @@
   <canvas id="game" width="800" height="600"></canvas>
   <div id="message">遊戲結束！</div>
   <button id="restart">重置本局（保留紀錄）</button>
+  
+  <div class="mobile-controls">
+    <button class="control-arrow" id="leftBtn">
+      <i class="fas fa-chevron-left"></i>
+    </button>
+    <button class="control-arrow" id="rightBtn">
+      <i class="fas fa-chevron-right"></i>
+    </button>
+  </div>
 
+  <script src="game_error_handler.js"></script>
   <script>
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
@@ -111,16 +193,66 @@
     let gameOver = false;
     let gameWon = false;
 
-    // 滑鼠控制
-    let mousePos = { x: 0 };
+    // Enhanced input controls
+    let mousePos = { x: canvas.width / 2 };
+    let touchActive = false;
+    
+    // Mouse controls
     canvas.addEventListener('mousemove', (e) => {
       const rect = canvas.getBoundingClientRect();
       mousePos.x = e.clientX - rect.left;
     });
+    
+    canvas.addEventListener('mouseleave', () => {
+      // Reset position when mouse leaves canvas
+      mousePos.x = canvas.width / 2;
+    });
+    
+    // Enhanced touch controls
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      touchActive = true;
+      const rect = canvas.getBoundingClientRect();
+      const touch = e.touches[0];
+      mousePos.x = touch.clientX - rect.left;
+    }, { passive: false });
+    
     canvas.addEventListener('touchmove', (e) => {
       e.preventDefault();
+      if (!touchActive) return;
+      
       const rect = canvas.getBoundingClientRect();
-      mousePos.x = e.touches[0].clientX - rect.left;
+      const touch = e.touches[0];
+      mousePos.x = touch.clientX - rect.left;
+    }, { passive: false });
+    
+    canvas.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      touchActive = false;
+    }, { passive: false });
+    
+    // Keyboard controls as fallback
+    document.addEventListener('keydown', (e) => {
+      const moveSpeed = 20;
+      switch(e.key) {
+        case 'ArrowLeft':
+        case 'a':
+        case 'A':
+          mousePos.x = Math.max(0, mousePos.x - moveSpeed);
+          break;
+        case 'ArrowRight':
+        case 'd':
+        case 'D':
+          mousePos.x = Math.min(canvas.width, mousePos.x + moveSpeed);
+          break;
+      }
+    });
+    
+    // Prevent scrolling on mobile when touching the game
+    document.body.addEventListener('touchmove', (e) => {
+      if (e.target === canvas) {
+        e.preventDefault();
+      }
     }, { passive: false });
 
     // 分數更新函式
@@ -267,7 +399,78 @@
       update();
     }
 
-    restartBtn.addEventListener('click', resetGame);
+restartBtn.addEventListener('click', resetGame);
+    
+    // Mobile control buttons
+    const leftBtn = document.getElementById('leftBtn');
+    const rightBtn = document.getElementById('rightBtn');
+    
+    if (leftBtn && rightBtn) {
+      let leftInterval = null;
+      let rightInterval = null;
+      
+      const moveLeft = () => {
+        mousePos.x = Math.max(paddle.width / 2, mousePos.x - 15);
+      };
+      
+      const moveRight = () => {
+        mousePos.x = Math.min(canvas.width - paddle.width / 2, mousePos.x + 15);
+      };
+      
+      leftBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        moveLeft();
+        leftInterval = setInterval(moveLeft, 50);
+      });
+      
+      leftBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        if (leftInterval) {
+          clearInterval(leftInterval);
+          leftInterval = null;
+        }
+      });
+      
+      rightBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        moveRight();
+        rightInterval = setInterval(moveRight, 50);
+      });
+      
+      rightBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        if (rightInterval) {
+          clearInterval(rightInterval);
+          rightInterval = null;
+        }
+      });
+      
+      // Mouse fallback for desktop testing
+      leftBtn.addEventListener('mousedown', () => {
+        moveLeft();
+        leftInterval = setInterval(moveLeft, 50);
+      });
+      
+      leftBtn.addEventListener('mouseup', () => {
+        if (leftInterval) {
+          clearInterval(leftInterval);
+          leftInterval = null;
+        }
+      });
+      
+      rightBtn.addEventListener('mousedown', () => {
+        moveRight();
+        rightInterval = setInterval(moveRight, 50);
+      });
+      
+      rightBtn.addEventListener('mouseup', () => {
+        if (rightInterval) {
+          clearInterval(rightInterval);
+          rightInterval = null;
+        }
+      });
+    }
+    
     update();
   </script>
 </body>
