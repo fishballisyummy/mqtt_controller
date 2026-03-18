@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Fishball's Game Center</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "secondary-fixed": "#e9ddff",
+                "on-primary-fixed-variant": "#2d486d",
+                "tertiary-fixed": "#74f5ff",
+                "on-tertiary-fixed-variant": "#004f54",
+                "primary-fixed": "#d5e3ff",
+                "inverse-surface": "#dfe2eb",
+                "secondary-container": "#6200ea",
+                "on-primary-container": "#8aa4cf",
+                "tertiary-fixed-dim": "#00dbe7",
+                "surface-variant": "#31353c",
+                "primary-container": "#1e3a5f",
+                "tertiary-container": "#004044",
+                "on-primary": "#133155",
+                "secondary-fixed-dim": "#cfbcff",
+                "on-surface": "#dfe2eb",
+                "on-error": "#690005",
+                "on-secondary-fixed-variant": "#5400cc",
+                "surface-container-highest": "#31353c",
+                "surface-container-high": "#262a31",
+                "surface-container": "#1c2026",
+                "surface-tint": "#adc8f5",
+                "inverse-on-surface": "#2d3137",
+                "on-surface-variant": "#c4c6cf",
+                "outline-variant": "#43474e",
+                "on-error-container": "#ffdad6",
+                "primary-fixed-dim": "#adc8f5",
+                "tertiary": "#00dbe7",
+                "outline": "#8e9199",
+                "on-secondary": "#3a0092",
+                "surface-container-lowest": "#0a0e14",
+                "on-secondary-container": "#cfbcff",
+                "secondary": "#cfbcff",
+                "primary": "#adc8f5",
+                "on-tertiary-container": "#00b4be",
+                "surface-dim": "#10141a",
+                "on-tertiary-fixed": "#002022",
+                "on-secondary-fixed": "#22005d",
+                "surface": "#10141a",
+                "surface-bright": "#353940",
+                "surface-container-low": "#181c22",
+                "on-primary-fixed": "#001c3b",
+                "background": "#10141a",
+                "error": "#ffb4ab",
+                "error-container": "#93000a",
+                "on-background": "#dfe2eb",
+                "on-tertiary": "#00363a",
+                "inverse-primary": "#455f87"
+              },
+              fontFamily: {
+                "headline": ["Space Grotesk"],
+                "body": ["Manrope"],
+                "label": ["Space Grotesk"]
+              },
+              borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+            },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #10141a;
+            color: #dfe2eb;
+            font-family: 'Manrope', sans-serif;
+        }
+        .neon-glow-primary {
+            box-shadow: 0 0 20px rgba(173, 200, 245, 0.15);
+        }
+        .neon-border-left {
+            position: relative;
+        }
+        .neon-border-left::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 20px;
+            width: 2px;
+            background-color: #00dbe7;
+        }
+    </style>
+</head>
+<body class="selection:bg-tertiary selection:text-on-tertiary">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#10141a]/60 backdrop-blur-xl border-b border-[#adc8f5]/15 shadow-[0_0_20px_rgba(173,200,245,0.1)]">
+<div class="flex items-center justify-between px-6 h-16 w-full">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-bold tracking-tighter text-[#adc8f5] uppercase font-['Space_Grotesk']">Fishball's Game Center</span>
+<nav class="hidden md:flex items-center gap-6 font-['Space_Grotesk'] tracking-tight">
+<a class="text-[#00dbe7] drop-shadow-[0_0_8px_rgba(0,219,231,0.5)] transition-colors duration-300" href="#">Home</a>
+<a class="text-[#c4c6cf] hover:text-[#00dbe7] transition-colors duration-300" href="#">Games</a>
+<a class="text-[#c4c6cf] hover:text-[#00dbe7] transition-colors duration-300" href="#">Library</a>
+</nav>
+</div>
+<div class="flex items-center gap-4 text-[#adc8f5]">
+<button class="p-2 hover:text-[#00dbe7] transition-colors active:scale-95">
+<span class="material-symbols-outlined">search</span>
+</button>
+<button class="p-2 hover:text-[#00dbe7] transition-colors active:scale-95">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 hover:text-[#00dbe7] transition-colors active:scale-95">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="p-2 hover:text-[#00dbe7] transition-colors active:scale-95">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</div>
+</header>
+<main class="pt-32 pb-24 px-6 max-w-7xl mx-auto min-h-screen">
+<!-- Hero Section -->
+<section class="mb-24 flex flex-col md:flex-row items-end justify-between gap-8">
+<div class="max-w-2xl">
+<h1 class="text-6xl md:text-8xl font-headline font-bold text-primary tracking-tighter leading-[0.9] mb-6">
+                    SYSTEM <br/> <span class="text-tertiary">ONLINE.</span>
+</h1>
+<p class="text-lg text-on-surface-variant font-body max-w-md leading-relaxed">
+                    Access the high-performance grid. Select your tactical simulation and engage in the digital void.
+                </p>
+</div>
+<div class="flex flex-col items-end gap-2 text-right">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
+<span class="text-xs font-label uppercase tracking-widest text-tertiary">Network Secure</span>
+</div>
+<div class="text-[10px] font-label text-on-surface-variant/40 uppercase tracking-[0.2em]">
+                    LATENCY: 12MS / UPTIME: 99.9%
+                </div>
+</div>
+</section>
+<!-- Bento Grid Games -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- Game 1: BlockBlast -->
+<div class="md:col-span-8 group relative overflow-hidden bg-surface-container rounded-lg neon-border-left transition-all duration-500 hover:bg-surface-container-high border border-outline-variant/10">
+<div class="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity">
+<img class="w-full h-full object-cover" data-alt="Abstract glowing geometric cube pattern" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKRwadWSSjBKkWNWkq19uNeZN6pzJysucovFVUE8ahh9qFLLKHMQXsnRSQ2BpiZ88tFqgY4pM6ixwcj-eNH8nEJX17X8_Z27EA5GUjbRzhc84XNwVoSOcQGgtOrDk7BCpuGOVlh8YvPzWo42F_ZPGXVGXQAKSUTTJIlDvlY4LvqfJ1XMMlhJFNE05gvlOAcHyrCqNe6hwiEuXJaA3ubAGKr4X4LZpwNIrfTL-udqzSSyAKxBLgXr1TdbuRluQmNdDYS22ZM0_cakg"/>
+</div>
+<div class="relative p-8 h-full flex flex-col justify-between min-h-[400px]">
+<div>
+<div class="inline-block px-3 py-1 bg-primary/10 border border-primary/20 rounded-full mb-6">
+<span class="text-[10px] font-label text-primary uppercase tracking-widest">Action Simulation</span>
+</div>
+<h2 class="text-4xl font-headline font-bold text-on-surface mb-4">BlockBlast</h2>
+<p class="text-on-surface-variant font-body max-w-sm">An addictive block-breaking game that pushes your reflexes to the absolute limit. Precision is mandatory.</p>
+</div>
+<div class="mt-8">
+<button class="inline-flex items-center gap-3 px-8 py-3 bg-primary-container text-primary font-label uppercase tracking-widest text-sm border border-primary/30 rounded-sm hover:shadow-[0_0_15px_rgba(0,219,231,0.4)] hover:border-tertiary transition-all active:scale-95 group/btn">
+                            Start Simulation
+                            <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Game 2: Rock-Paper-Scissors -->
+<div class="md:col-span-4 group relative overflow-hidden bg-surface-container rounded-lg neon-border-left transition-all duration-500 hover:bg-surface-container-high border border-outline-variant/10">
+<div class="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity">
+<img class="w-full h-full object-cover" data-alt="Cyberpunk hand interface glow" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCzEdzu8_uu6Cg7zXIMmIJp90v4xzrsgbEhssPt9mqokwgrq2GYZw3nEUEt42kKCrW6Ro-PeC96Hk6hnOCDA433tKkOEXc8QXZKTnM3i3IlT9RQB-IV2Viqe0Ch1DQUyqHTRgH1Xek-BNnNP20gW7-0EXqv-wN9RhIbvWkYCN98T1ma_V5jW-AV3dGIisY4kjJSADYZ9_ZCW7g6tC5PMhU8M3VWzXq88TZpVVOvtzifRJ0ImUowDneiGKIQS4IKp4IOwTwZQSdohWw"/>
+</div>
+<div class="relative p-8 h-full flex flex-col justify-between min-h-[400px]">
+<div>
+<div class="inline-block px-3 py-1 bg-secondary/10 border border-secondary/20 rounded-full mb-6">
+<span class="text-[10px] font-label text-secondary uppercase tracking-widest">Logic Protocol</span>
+</div>
+<h2 class="text-3xl font-headline font-bold text-on-surface mb-4">Rock-Paper-Scissors</h2>
+<p class="text-on-surface-variant font-body text-sm">The classic game, reinvented for the neon era. Outsmart the neural link.</p>
+</div>
+<div class="mt-8">
+<button class="w-full flex items-center justify-center gap-3 px-6 py-3 border border-outline/30 text-primary font-label uppercase tracking-widest text-xs rounded-sm hover:border-primary hover:bg-primary/5 transition-all active:scale-95">
+                            Engage
+                        </button>
+</div>
+</div>
+</div>
+<!-- Stats/System Module (Asymmetric filler) -->
+<div class="md:col-span-4 bg-surface-container-low rounded-lg p-6 border border-outline-variant/5 flex flex-col justify-center gap-4">
+<div class="space-y-4">
+<div class="flex justify-between items-end border-b border-outline-variant/10 pb-2">
+<span class="text-[10px] font-label text-on-surface-variant uppercase tracking-tighter">Active Nodes</span>
+<span class="text-xl font-headline font-bold text-tertiary">2,481</span>
+</div>
+<div class="flex justify-between items-end border-b border-outline-variant/10 pb-2">
+<span class="text-[10px] font-label text-on-surface-variant uppercase tracking-tighter">System Load</span>
+<span class="text-xl font-headline font-bold text-secondary">34%</span>
+</div>
+<div class="flex justify-between items-end border-b border-outline-variant/10 pb-2">
+<span class="text-[10px] font-label text-on-surface-variant uppercase tracking-tighter">Data Flux</span>
+<span class="text-xl font-headline font-bold text-primary">High</span>
+</div>
+</div>
+</div>
+<!-- Game 3: Wind Tunnel Simulator -->
+<div class="md:col-span-8 group relative overflow-hidden bg-surface-container rounded-lg neon-border-left transition-all duration-500 hover:bg-surface-container-high border border-outline-variant/10">
+<div class="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity">
+<img class="w-full h-full object-cover" data-alt="Digital wind stream data visual" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0Np_VgHK2C6YrBZQwrfsZfFj8rflczw3PzTUUhacSLGaNJxGOhifGjh35572UHndEDbkFTzd4ctbmeYgnX0kKbuAY_sB-20xnpshwc65uvEctMfkq0se8SlrqCpvPVtsTFmrbvbxbuIcouRnLCfYD_QKn1kG2P9gtUh9q_a9dFtbfRxbSP-mSE131-iBQj-0ZT-5fh_HRMxoXzeLn96MvXDZnnE-5vz1tiIiLEn3Exn8U6nlEXEljWU14PA1sC7-hQ-l2mKQ06-M"/>
+</div>
+<div class="relative p-8 flex flex-col md:flex-row gap-8 items-center h-full">
+<div class="flex-1">
+<div class="inline-block px-3 py-1 bg-tertiary/10 border border-tertiary/20 rounded-full mb-6">
+<span class="text-[10px] font-label text-tertiary uppercase tracking-widest">Physics Core</span>
+</div>
+<h2 class="text-4xl font-headline font-bold text-on-surface mb-4">Wind Tunnel Simulator</h2>
+<p class="text-on-surface-variant font-body max-w-sm mb-8">Feel the aerodynamics. A high-fidelity fluid dynamics simulation in real-time space.</p>
+<button class="inline-flex items-center gap-3 px-8 py-3 bg-surface-bright text-tertiary font-label uppercase tracking-widest text-sm border border-tertiary/20 rounded-sm hover:bg-tertiary hover:text-on-tertiary transition-all active:scale-95 group/btn">
+                            Initialize Core
+                            <span class="material-symbols-outlined text-sm">cyclone</span>
+</button>
+</div>
+<div class="hidden md:block w-1/3">
+<div class="aspect-square rounded-full border-2 border-dashed border-tertiary/20 animate-[spin_20s_linear_infinite] flex items-center justify-center">
+<div class="w-3/4 h-3/4 rounded-full border-2 border-primary/20 animate-[spin_10s_linear_infinite_reverse]"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full py-12 border-t border-[#adc8f5]/5 bg-[#10141a]">
+<div class="max-w-7xl mx-auto flex flex-col items-center gap-6 px-8">
+<div class="text-lg font-black text-[#cfbcff] font-['Space_Grotesk'] tracking-widest uppercase">Fishball</div>
+<div class="flex flex-wrap justify-center gap-8">
+<a class="text-[#c4c6cf]/40 font-['Manrope'] text-xs uppercase tracking-widest hover:text-[#adc8f5] transition-colors" href="#">Terms of Service</a>
+<a class="text-[#c4c6cf]/40 font-['Manrope'] text-xs uppercase tracking-widest hover:text-[#adc8f5] transition-colors" href="#">Privacy Protocol</a>
+<a class="text-[#c4c6cf]/40 font-['Manrope'] text-xs uppercase tracking-widest hover:text-[#adc8f5] transition-colors" href="#">Support</a>
+<a class="text-[#c4c6cf]/40 font-['Manrope'] text-xs uppercase tracking-widest hover:text-[#adc8f5] transition-colors" href="#">System Status</a>
+</div>
+<div class="text-[#c4c6cf]/20 font-['Manrope'] text-[10px] uppercase tracking-[0.3em] mt-4">
+                © 2024 Fishball. All rights reserved.
+            </div>
+</div>
+</footer>
+<!-- Mobile BottomNavBar -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full flex justify-around items-center h-20 px-4 pb-safe bg-[#10141a]/80 backdrop-blur-lg border-t border-[#adc8f5]/10 z-50">
+<a class="flex flex-col items-center justify-center text-[#00dbe7] bg-[#adc8f5]/10 rounded-lg py-1 px-4" href="#">
+<span class="material-symbols-outlined">grid_view</span>
+<span class="font-['Space_Grotesk'] text-[10px] uppercase tracking-widest mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#c4c6cf]/60 hover:bg-[#adc8f5]/5 transition-all" href="#">
+<span class="material-symbols-outlined">sports_esports</span>
+<span class="font-['Space_Grotesk'] text-[10px] uppercase tracking-widest mt-1">Games</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#c4c6cf]/60 hover:bg-[#adc8f5]/5 transition-all" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-['Space_Grotesk'] text-[10px] uppercase tracking-widest mt-1">Library</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#c4c6cf]/60 hover:bg-[#adc8f5]/5 transition-all" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-['Space_Grotesk'] text-[10px] uppercase tracking-widest mt-1">Profile</span>
+</a>
+</nav>
+</body></html>
