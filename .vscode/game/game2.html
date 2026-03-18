@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>機器視覺剪刀石頭布 - 高精度版</title>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: white;
+        }
+        
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+        }
+        
+        header {
+            text-align: center;
+            padding: 25px;
+            background: rgba(0, 0, 0, 0.4);
+            border-bottom: 2px solid #ff6b6b;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #ff9a9e, #fad0c4, #fad0c4, #a1c4fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .game-area {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 25px;
+            gap: 25px;
+        }
+        
+        .camera-section {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(20, 20, 30, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+        }
+        
+        .camera-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #4ecdc4;
+        }
+        
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 75%; /* 4:3 aspect ratio */
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            background: #000;
+            border: 2px solid #4ecdc4;
+        }
+        
+        #video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .gesture-display {
+            width: 100%;
+            text-align: center;
+            padding: 15px;
+            background: rgba(30, 30, 40, 0.8);
+            border-radius: 10px;
+            margin-top: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .game-section {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(20, 20, 30, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+        }
+        
+        .game-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #ff6b6b;
+        }
+        
+        .choices {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin: 20px 0;
+        }
+        
+        .choice {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(50, 50, 60, 0.8);
+            border: 2px solid #ff9a9e;
+        }
+        
+        .choice:hover {
+            transform: scale(1.1);
+            background: rgba(70, 70, 80, 0.9);
+        }
+        
+        .choice i {
+            font-size: 2.5rem;
+        }
+        
+        .rock { color: #ffd166; }
+        .paper { color: #06d6a0; }
+        .scissors { color: #118ab2; }
+        
+        .result-section {
+            width: 100%;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .result-text {
+            font-size: 1.8rem;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            background: rgba(30, 30, 40, 0.8);
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+        
+        .win { color: #06d6a0; }
+        .lose { color: #ef476f; }
+        .draw { color: #ffd166; }
+        
+        .scores {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin: 20px 0;
+        }
+        
+        .score-box {
+            background: rgba(30, 30, 40, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 120px;
+        }
+        
+        .score-title {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            color: #a1c4fd;
+        }
+        
+        .score-value {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        
+        .player-score { color: #4ecdc4; }
+        .computer-score { color: #ff6b6b; }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(to right, #ff9a9e, #fad0c4);
+            color: #1a1a2e;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(255, 154, 158, 0.4);
+        }
+        
+        #startBtn {
+            background: linear-gradient(to right, #4ecdc4, #55efc4);
+            color: #1a1a2e;
+        }
+        
+        #resetBtn {
+            background: linear-gradient(to right, #a1c4fd, #c2e9fb);
+            color: #1a1a2e;
+        }
+        
+        .countdown {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #ff6b6b;
+            margin: 15px 0;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .instructions {
+            padding: 25px;
+            background: rgba(0, 0, 0, 0.4);
+            border-top: 2px solid #4ecdc4;
+        }
+        
+        .instructions h2 {
+            text-align: center;
+            margin-bottom: 15px;
+            color: #ffd166;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .instructions li {
+            margin: 10px 0;
+            line-height: 1.5;
+        }
+        
+        .gesture-icons {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 15px;
+        }
+        
+        .gesture-icon {
+            text-align: center;
+        }
+        
+        .gesture-icon i {
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+        }
+        
+        .rock-icon { color: #ffd166; }
+        .paper-icon { color: #06d6a0; }
+        .scissors-icon { color: #118ab2; }
+        
+        @media (max-width: 768px) {
+            .game-area {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .choices {
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+            
+            .choice {
+                width: 70px;
+                height: 70px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>機器視覺剪刀石頭布 - 高精度版</h1>
+            <p class="subtitle">使用高精度 MediaPipe Pose 模型進行手勢識別，與電腦對戰！系統會自動檢測您的手勢並進行遊戲</p>
+        </header>
+        
+        <div class="game-area">
+            <div class="camera-section">
+                <h2 class="camera-title">您的手勢</h2>
+                <div class="video-container">
+                    <video id="video" autoplay playsinline></video>
+                </div>
+                <div class="gesture-display">
+                    <span id="detectedGesture">請啟動攝像頭</span>
+                </div>
+                <div class="countdown" id="countdown"></div>
+                <button id="startBtn">開始遊戲</button>
+            </div>
+            
+            <div class="game-section">
+                <h2 class="game-title">電腦的選擇</h2>
+                <div class="choices">
+                    <div class="choice rock" id="computerRock">
+                        <i class="fas fa-hand-rock"></i>
+                    </div>
+                    <div class="choice paper" id="computerPaper">
+                        <i class="fas fa-hand-paper"></i>
+                    </div>
+                    <div class="choice scissors" id="computerScissors">
+                        <i class="fas fa-hand-scissors"></i>
+                    </div>
+                </div>
+                
+                <div class="result-section">
+                    <div class="result-text" id="resultText">準備開始遊戲...</div>
+                </div>
+                
+                <div class="scores">
+                    <div class="score-box">
+                        <div class="score-title">玩家分數</div>
+                        <div class="score-value player-score" id="playerScore">0</div>
+                    </div>
+                    <div class="score-box">
+                        <div class="score-title">電腦分數</div>
+                        <div class="score-value computer-score" id="computerScore">0</div>
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <button id="resetBtn">重置遊戲</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h2>如何遊玩</h2>
+            <ul>
+                <li>點擊「開始遊戲」按鈕允許訪問您的攝像頭</li>
+                <li>等待3秒倒數結束後，系統會開始檢測您的手勢</li>
+                <li>在攝像頭前做出以下手勢：
+                    <div class="gesture-icons">
+                        <div class="gesture-icon">
+                            <i class="fas fa-hand-rock rock-icon"></i>
+                            <div>石頭</div>
+                        </div>
+                        <div class="gesture-icon">
+                            <i class="fas fa-hand-paper paper-icon"></i>
+                            <div>布</div>
+                        </div>
+                        <div class="gesture-icon">
+                            <i class="fas fa-hand-scissors scissors-icon"></i>
+                            <div>剪刀</div>
+                        </div>
+                    </div>
+                </li>
+                <li>每局結束後，點擊「開始遊戲」按鈕開始新一輪</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // ========== MediaPipe Pose 初始化 ==========
+        let pose;
+        let isModelLoaded = false;
+        let cameraStarted = false;
+
+        // DOM 元素
+        const video = document.getElementById('video');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const countdownEl = document.getElementById('countdown');
+        const detectedGesture = document.getElementById('detectedGesture');
+        const resultText = document.getElementById('resultText');
+        const playerScoreEl = document.getElementById('playerScore');
+        const computerScoreEl = document.getElementById('computerScore');
+        const computerRock = document.getElementById('computerRock');
+        const computerPaper = document.getElementById('computerPaper');
+        const computerScissors = document.getElementById('computerScissors');
+
+        // 遊戲狀態
+        let playerScore = 0;
+        let computerScore = 0;
+        let isGameActive = false;
+        let lastDetectedGesture = null;
+        let detectionInterval = null;
+        let roundEnded = true;
+
+        const gestures = ['rock', 'paper', 'scissors'];
+        const gestureNames = {
+            rock: '石頭',
+            paper: '布',
+            scissors: '剪刀'
+        };
+
+        // ========== 初始化 MediaPipe Pose（高精度版本）==========
+        function initPose() {
+            if (isModelLoaded) return;
+            
+            detectedGesture.textContent = '正在載入高精度 AI 模型...';
+            
+            pose = new Pose({
+                locateFile: (file) => {
+                    return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+                }
+            });
+
+            // 使用最高精度模型 (modelComplexity: 2)
+            pose.setOptions({
+                modelComplexity: 2, // 0=輕量, 1=平衡, 2=高精度
+                smoothLandmarks: true,
+                enableSegmentation: false,
+                smoothSegmentation: false,
+                minDetectionConfidence: 0.5,
+                minTrackingConfidence: 0.5
+            });
+
+            pose.onResults(onResults);
+            isModelLoaded = true;
+            detectedGesture.textContent = '高精度模型載入完成！';
+        }
+
+        // ========== 處理 MediaPipe 結果 ==========
+        function onResults(results) {
+            if (!isGameActive || !results.poseLandmarks) {
+                return;
+            }
+
+            // 在畫面上繪製關鍵點和骨架
+            drawResults(results);
+
+            // 判斷手勢（左右手都檢測）
+            const rightGesture = classifyGesture(results.poseLandmarks, 'right');
+            const leftGesture = classifyGesture(results.poseLandmarks, 'left');
+
+            // 取置信度較高的手勢（若都有效）
+            let finalGesture = null;
+            if (rightGesture && leftGesture) {
+                // 若兩手都有效，取右手
+                finalGesture = rightGesture;
+            } else if (rightGesture) {
+                finalGesture = rightGesture;
+            } else if (leftGesture) {
+                finalGesture = leftGesture;
+            }
+
+            if (finalGesture) {
+                detectedGesture.textContent = `檢測到: ${gestureNames[finalGesture]}`;
+                if (finalGesture !== lastDetectedGesture) {
+                    lastDetectedGesture = finalGesture;
+                    playRound(finalGesture);
+                }
+            } else {
+                detectedGesture.textContent = '請做出明確手勢';
+                lastDetectedGesture = null;
+            }
+        }
+
+        // ========== 繪製關鍵點與連線 ==========
+        function drawResults(results) {
+            // 使用 MediaPipe 的 drawing utils 繪製骨架
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+
+            // 繪製原始影像
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // 繪製關鍵點與連線
+            if (results.poseLandmarks) {
+                // 繪製骨架（更粗的線條以便觀察）
+                drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, {
+                    color: '#FF6B6B',
+                    lineWidth: 3
+                });
+                // 繪製關鍵點（更大的點）
+                drawLandmarks(ctx, results.poseLandmarks, {
+                    color: '#4ECDC4',
+                    lineWidth: 2,
+                    radius: 6
+                });
+            }
+
+            // 將繪製結果覆蓋到 video 上
+            video.style.opacity = 0.9;
+            video.parentElement.style.position = 'relative';
+            const overlay = video.parentElement.querySelector('.overlay') || createOverlay();
+            overlay.src = canvas.toDataURL();
+            overlay.style.display = 'block';
+        }
+
+        // ========== 創建覆蓋層（用於顯示骨架）==========
+        function createOverlay() {
+            const overlay = document.createElement('img');
+            overlay.className = 'overlay';
+            overlay.style.position = 'absolute';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100%';
+            overlay.style.height = '100%';
+            overlay.style.pointerEvents = 'none';
+            overlay.style.zIndex = '10';
+            video.parentElement.appendChild(overlay);
+            return overlay;
+        }
+
+        // ========== 手勢判斷邏輯（基於 MediaPipe 關鍵點）==========
+        function classifyGesture(landmarks, handType) {
+            // MediaPipe Pose 關鍵點索引（完整 33 點模型）
+            // 15: right wrist
+            // 16: left wrist
+            // 17: right thumb
+            // 18: right index finger
+            // 19: right middle finger
+            // 20: right ring finger
+            // 21: right pinky
+            // 22: left thumb
+            // 23: left index finger
+            // 24: left middle finger
+            // 25: left ring finger
+            // 26: left pinky
+
+            const wristKey = handType === 'right' ? 15 : 16;
+            const thumbKey = handType === 'right' ? 17 : 22;
+            const indexKey = handType === 'right' ? 18 : 23;
+            const middleKey = handType === 'right' ? 19 : 24;
+            const ringKey = handType === 'right' ? 20 : 25;
+            const pinkyKey = handType === 'right' ? 21 : 26;
+
+            const wrist = landmarks[wristKey];
+            const thumb = landmarks[thumbKey];
+            const index = landmarks[indexKey];
+            const middle = landmarks[middleKey];
+            const ring = landmarks[ringKey];
+            const pinky = landmarks[pinkyKey];
+
+            // 若手腕未偵測到，視為無手
+            if (!wrist || !wrist.visibility || wrist.visibility < 0.6) return null;
+
+            // 計算手指是否「伸直」：指尖 y 坐標 < 手腕 y（假設鏡頭正對，y 向下為正）
+            // 使用更高的閾值以提高準確度
+            const isThumbOpen = thumb && thumb.visibility > 0.6 && thumb.y < wrist.y - 0.03;
+            const isIndexOpen = index && index.visibility > 0.6 && index.y < wrist.y - 0.04;
+            const isMiddleOpen = middle && middle.visibility > 0.6 && middle.y < wrist.y - 0.04;
+            const isRingOpen = ring && ring.visibility > 0.6 && ring.y < wrist.y - 0.03;
+            const isPinkyOpen = pinky && pinky.visibility > 0.6 && pinky.y < wrist.y - 0.03;
+
+            // 改進的手勢判斷邏輯
+            const openFingers = [isIndexOpen, isMiddleOpen, isRingOpen, isPinkyOpen].filter(Boolean).length;
+
+            // 布：3-4 根手指伸直
+            if (openFingers >= 3) {
+                return 'paper';
+            }
+            // 剪刀：1-2 根手指伸直（主要是食指和中指）
+            else if (openFingers === 2 && isIndexOpen && isMiddleOpen) {
+                return 'scissors';
+            }
+            // 石頭：0-1 根手指伸直
+            else if (openFingers <= 1) {
+                return 'rock';
+            }
+            
+            return null;
+        }
+
+        // ========== 啟動攝像頭和遊戲 ==========
+        startBtn.addEventListener('click', async () => {
+            if (!roundEnded) return;
+
+            try {
+                // 初始化模型
+                if (!isModelLoaded) {
+                    initPose();
+                }
+
+                // 啟動攝像頭（只啟動一次）
+                if (!cameraStarted) {
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: { 
+                            facingMode: 'user',
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 }
+                        },
+                        audio: false
+                    });
+                    video.srcObject = stream;
+                    cameraStarted = true;
+                }
+
+                // UI 更新
+                startBtn.disabled = true;
+                startBtn.textContent = '倒數中...';
+                roundEnded = false;
+                resultText.textContent = '準備開始...';
+                resultText.className = 'result-text';
+                clearComputerChoice();
+                detectedGesture.textContent = '準備檢測手勢';
+
+                // 倒數
+                let count = 3;
+                countdownEl.textContent = count;
+                const countdownInterval = setInterval(() => {
+                    count--;
+                    if (count > 0) {
+                        countdownEl.textContent = count;
+                    } else {
+                        clearInterval(countdownInterval);
+                        countdownEl.textContent = '';
+                        detectedGesture.textContent = '檢測中...';
+                        isGameActive = true;
+                        startBtn.textContent = '開始新一輪';
+                        startBtn.disabled = false;
+                        
+                        // 開始 MediaPipe 檢測
+                        const camera = new Camera(video, {
+                            onFrame: async () => {
+                                await pose.send({ image: video });
+                            },
+                            width: 1280,
+                            height: 720
+                        });
+                        camera.start();
+                    }
+                }, 1000);
+
+            } catch (err) {
+                console.error("錯誤:", err);
+                detectedGesture.textContent = '錯誤：' + (err.message || '無法啟動');
+                startBtn.disabled = false;
+                startBtn.textContent = '開始遊戲';
+            }
+        });
+
+        // ========== 其餘遊戲邏輯 ==========
+        resetBtn.addEventListener('click', () => {
+            const history = JSON.parse(localStorage.getItem('rpsHistory') || '[]');
+            history.push({
+                date: new Date().toLocaleString(),
+                playerScore: playerScore,
+                computerScore: computerScore
+            });
+            localStorage.setItem('rpsHistory', JSON.stringify(history));
+
+            playerScore = 0;
+            computerScore = 0;
+            playerScoreEl.textContent = '0';
+            computerScoreEl.textContent = '0';
+            resultText.textContent = '遊戲已重置';
+            resultText.className = 'result-text';
+            clearComputerChoice();
+            detectedGesture.textContent = '請啟動攝像頭';
+            isGameActive = false;
+            roundEnded = true;
+            startBtn.disabled = false;
+            startBtn.textContent = '開始遊戲';
+            countdownEl.textContent = '';
+        });
+
+        function clearComputerChoice() {
+            computerRock.style.opacity = '0.5';
+            computerPaper.style.opacity = '0.5';
+            computerScissors.style.opacity = '0.5';
+        }
+
+        function setComputerChoice(choice) {
+            clearComputerChoice();
+            if (choice === 'rock') computerRock.style.opacity = '1';
+            if (choice === 'paper') computerPaper.style.opacity = '1';
+            if (choice === 'scissors') computerScissors.style.opacity = '1';
+        }
+
+        function playRound(playerGesture) {
+            isGameActive = false;
+            roundEnded = true;
+
+            const computerGesture = gestures[Math.floor(Math.random() * gestures.length)];
+            setComputerChoice(computerGesture);
+
+            let result;
+            if (playerGesture === computerGesture) {
+                result = '平局';
+                resultText.className = 'result-text draw';
+            } else if (
+                (playerGesture === 'rock' && computerGesture === 'scissors') ||
+                (playerGesture === 'paper' && computerGesture === 'rock') ||
+                (playerGesture === 'scissors' && computerGesture === 'paper')
+            ) {
+                result = '您贏了!';
+                playerScore++;
+                playerScoreEl.textContent = playerScore;
+                resultText.className = 'result-text win';
+            } else {
+                result = '電腦贏了!';
+                computerScore++;
+                computerScoreEl.textContent = computerScore;
+                resultText.className = 'result-text lose';
+            }
+
+            resultText.textContent = `${gestureNames[playerGesture]} vs ${gestureNames[computerGesture]} - ${result}`;
+            detectedGesture.textContent = '回合結束！點擊「開始遊戲」開始新一輪';
+        }
+
+        // 初始化
+        clearComputerChoice();
+    </script>
+</body>
+</html>
+
